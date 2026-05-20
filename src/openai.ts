@@ -1,20 +1,40 @@
 import { ChatGPTAPI } from "chatgpt";
-
 import { encode } from 'gpt-3-encoder';
 import inquirer from "inquirer";
-import { AI_PROVIDER } from "./config.js"
 
-const FEE_PER_1K_TOKENS = 0.02;
-const MAX_TOKENS = 128000;
-//this is the approximate cost of a completion (answer) fee from CHATGPT
-const FEE_COMPLETION = 0.001;
+const MAX_INPUT_TOKENS: number = 128000;
+const MAX_OUTPUT_TOKENS: number = 400;
+const FEE_INPUT_PER_TOKEN: number = 0.000005;
+const FEE_COMPLETION_PER_TOKEN: number = 0.000015;
+
+interface SendMessageOptions {
+  apiKey: string;
+  model: string;
+}
+
+interface PromptOptions {
+  commitType?: string;
+  customMessageConvention?: string;
+  language: string;
+}
+
+interface MultiplePromptOptions extends PromptOptions {
+  numOptions: number;
+}
+
+interface FilterApiOptions {
+  prompt: string;
+  numCompletion?: number;
+  filterFee?: boolean;
+}
 
 const openai = {
-  sendMessage: async (input, {apiKey, model}) => {
+  sendMessage: async (input: string, { apiKey, model }: SendMessageOptions): Promise<string> => {
     const api = new ChatGPTAPI({
       apiKey,
       completionParams: {
-        model: "gpt-4o-mini",
+        model: model || "gpt-4o-mini",
+        max_tokens: MAX_OUTPUT_TOKENS,
       },
     });
     const { text } = await api.sendMessage(input);
@@ -22,7 +42,7 @@ const openai = {
     return text;
   },
 
-  getPromptForSingleCommit: (diff, {commitType, customMessageConvention, language}) => {
+  getPromptForSingleCommit: (diff: string, { commitType, customMessageConvention, language }: PromptOptions): string => {
     const systemPrompt = `You are a deterministic git commit message generator. Analyze the provided git diff and generate a professional commit message.
 
 CRITICAL RULES:
@@ -42,7 +62,7 @@ CRITICAL RULES:
     return prompt;
   },
 
-  getPromptForMultipleCommits: (diff, {commitType, customMessageConvention, numOptions, language}) => {
+  getPromptForMultipleCommits: (diff: string, { commitType, customMessageConvention, numOptions, language }: MultiplePromptOptions): string => {
     const systemPrompt = `You are a deterministic git commit message generator. Analyze the provided git diff and generate a professional commit message.
 
 CRITICAL RULES:
@@ -63,18 +83,18 @@ CRITICAL RULES:
     return prompt;
   },
 
-  filterApi: async ({ prompt, numCompletion = 1, filterFee }) => {
+  filterApi: async ({ prompt, numCompletion = 1, filterFee }: FilterApiOptions): Promise<boolean> => {
     const numTokens = encode(prompt).length;
-    const fee = numTokens / 1000 * FEE_PER_1K_TOKENS + (FEE_COMPLETION * numCompletion);
+    const fee = (numTokens * FEE_INPUT_PER_TOKEN) + (MAX_OUTPUT_TOKENS * FEE_COMPLETION_PER_TOKEN * numCompletion);
 
-    if (numTokens > MAX_TOKENS) {
-        console.log("The commit diff is too large for the ChatGPT API. Max 4k tokens or ~8k characters. ");
+    if (numTokens > MAX_INPUT_TOKENS) {
+        console.log(`The commit diff is too large for the ChatGPT API. Max ${MAX_INPUT_TOKENS} tokens.`);
         return false;
     }
 
     if (filterFee) {
         console.log(`This will cost you ~$${+fee.toFixed(3)} for using the API.`);
-        const answer = await inquirer.prompt([
+        const answer: any = await inquirer.prompt([
             {
                 type: "confirm",
                 name: "continue",

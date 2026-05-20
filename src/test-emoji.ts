@@ -3,7 +3,13 @@ import assert from 'assert';
 
 console.log('Running emoji regression tests...');
 
-const testCases = [
+interface TestCase {
+  input: string;
+  expected: string;
+  description: string;
+}
+
+const testCases: TestCase[] = [
   {
     input: '🔧 chore: update dependencies',
     expected: 'chore: update dependencies',

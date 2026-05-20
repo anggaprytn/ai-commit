@@ -1,8 +1,12 @@
 import { execSync } from "child_process";
 
-const getArgs = () => {
+export interface Args {
+  [key: string]: any;
+}
+
+const getArgs = (): Args => {
   const args = process.argv.slice(2);
-  const result = {};
+  const result: Args = {};
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -28,7 +32,7 @@ const getArgs = () => {
 };
 
 
-const checkGitRepository = () => {
+const checkGitRepository = (): boolean => {
   try {
     const output = execSync('git rev-parse --is-inside-work-tree', { encoding: 'utf-8' });
     return output.trim() === 'true';
@@ -37,7 +41,7 @@ const checkGitRepository = () => {
   }
 };
 
-function stripEmoji(input) {
+function stripEmoji(input: string): string {
   return input
     .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, "")
     .replace(/\s+/g, " ")

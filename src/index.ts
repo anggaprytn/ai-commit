@@ -8,28 +8,24 @@ import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
 
-const REGENERATE_MSG = "Regenerate Commit Messages";
+const REGENERATE_MSG: string = "Regenerate Commit Messages";
 
-const ENDPOINT = args.ENDPOINT || process.env.ENDPOINT
+const apiKey: string | undefined = args.apiKey || (process.env.OPENAI_API_KEY as string);
 
-const apiKey = args.apiKey || process.env.OPENAI_API_KEY;
-
-const language = args.language || process.env.AI_COMMIT_LANGUAGE || 'english';
+const language: string = args.language || (process.env.AI_COMMIT_LANGUAGE as string) || 'english';
 
 if (AI_PROVIDER === 'openai' && !apiKey) {
   console.error("Please set the OPENAI_API_KEY environment variable.");
   process.exit(1);
 }
 
-let template = args.template || process.env.AI_COMMIT_COMMIT_TEMPLATE
+const commitType: string | undefined = args['commit-type'];
 
-const commitType = args['commit-type'];
+const provider: any = AI_PROVIDER === 'ollama' ? ollama : openai;
 
-const provider = AI_PROVIDER === 'ollama' ? ollama : openai
+const customMessageConvention: string | undefined = args['custom-conventions'];
 
-const customMessageConvention = args['custom-conventions']
-
-const processTemplate = ({ template, commitMessage }) => {
+const processTemplate = ({ template, commitMessage }: { template: string, commitMessage: string }): string => {
   if (!template.includes('COMMIT_MESSAGE')) {
     console.log(`Warning: template doesn't include {COMMIT_MESSAGE}`)
 
@@ -49,28 +45,28 @@ const processTemplate = ({ template, commitMessage }) => {
   return finalCommitMessage.trim();
 }
 
-const makeCommit = (input) => {
+const makeCommit = (input: string): void => {
   console.log("Committing Message... ");
   execSync(`git commit -F -`, { input: stripEmoji(input) });
   console.log("Commit Successful!");
 };
 
 
-const getPromptForSingleCommit = (diff) => {
+const getPromptForSingleCommit = (diff: string): string => {
   return provider.getPromptForSingleCommit(diff, { commitType, customMessageConvention, language })
 };
 
-const generateSingleCommit = async (diff) => {
+const generateSingleCommit = async (diff: string): Promise<void> => {
   const prompt = getPromptForSingleCommit(diff)
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'] })) process.exit(1);
 
-  const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
+  const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
 
   let finalCommitMessage = stripEmoji(text);
 
   if (args.template) {
     finalCommitMessage = processTemplate({
-      template: args.template,
+      template: args.template as string,
       commitMessage: finalCommitMessage,
     })
 
@@ -90,7 +86,7 @@ const generateSingleCommit = async (diff) => {
     return;
   }
 
-  const answer = await inquirer.prompt([
+  const answer: any = await inquirer.prompt([
     {
       type: "confirm",
       name: "continue",
@@ -107,17 +103,17 @@ const generateSingleCommit = async (diff) => {
   makeCommit(finalCommitMessage);
 };
 
-const generateListCommits = async (diff, numOptions = 5) => {
+const generateListCommits = async (diff: string, numOptions: number = 5): Promise<void> => {
   const prompt = provider.getPromptForMultipleCommits(diff, { commitType, customMessageConvention, numOptions, language })
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'], numCompletion: numOptions })) process.exit(1);
 
-  const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
+  const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
 
-  let msgs = text.split(";").map((msg) => stripEmoji(msg));
+  let msgs = text.split(";").map((msg: string) => stripEmoji(msg));
 
   if (args.template) {
-    msgs = msgs.map(msg => processTemplate({
-      template: args.template,
+    msgs = msgs.map((msg: string) => processTemplate({
+      template: args.template as string,
       commitMessage: msg,
     }))
   }
@@ -125,7 +121,7 @@ const generateListCommits = async (diff, numOptions = 5) => {
   // add regenerate option
   msgs.push(REGENERATE_MSG);
 
-  const answer = await inquirer.prompt([
+  const answer: any = await inquirer.prompt([
     {
       type: "list",
       name: "commit",
@@ -143,7 +139,7 @@ const generateListCommits = async (diff, numOptions = 5) => {
 };
 
 // Add this function after imports
-const filterLockFiles = (diff) => {
+const filterLockFiles = (diff: string): string => {
   const lines = diff.split('\n');
   let isLockFile = false;
   const filteredLines = lines.filter(line => {
@@ -159,7 +155,7 @@ const filterLockFiles = (diff) => {
   return filteredLines.join('\n');
 };
 
-async function generateAICommit() {
+async function generateAICommit(): Promise<void> {
   const isGitRepository = checkGitRepository();
 
   if (!isGitRepository) {

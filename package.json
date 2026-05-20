@@ -3,14 +3,15 @@
   "version": "2.2.0",
   "type": "module",
   "description": "Make Github commits easier with ChatGPT and Conventional Commits",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "node test-emoji.js",
+    "build": "tsc",
+    "test": "node dist/test-emoji.js",
     "publish:major": "npm version major && npm publish --access public",
-    "ollama": "PROVIDER=ollama node index.js "
+    "ollama": "PROVIDER=ollama node dist/index.js"
   },
   "bin": {
-    "ai-commit": "./index.js"
+    "ai-commit": "./dist/index.js"
   },
   "author": "Insuline.ru <insuline.ru@gmail.com>",
   "license": "MIT",
@@ -19,5 +20,11 @@
     "dotenv": "^16.0.3",
     "gpt-3-encoder": "^1.1.4",
     "inquirer": "^9.1.4"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^25.9.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }

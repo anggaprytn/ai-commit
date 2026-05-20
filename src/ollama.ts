@@ -11,11 +11,32 @@ CRITICAL RULES:
 ABSOLUTE NEGATIVE CONSTRAINT:
 Do not put any emoji (like 🚀, ✨, 🐛, 🚑, etc.) in the output. Emojis are strictly banned.`;
 
+interface SendMessageOptions {
+  apiKey?: string;
+  model?: string;
+}
+
+interface PromptOptions {
+  commitType?: string;
+  customMessageConvention?: string;
+  language: string;
+}
+
+interface MultiplePromptOptions extends PromptOptions {
+  numOptions: number;
+}
+
+interface FilterApiOptions {
+  prompt: string;
+  numCompletion?: number;
+  filterFee?: boolean;
+}
+
 const ollama = {
   /**
    * send prompt to ai.
    */
-  sendMessage: async (input, { apiKey, model = 'mistral' }) => {
+  sendMessage: async (input: string, { apiKey, model = 'mistral' }: SendMessageOptions): Promise<string> => {
     const url = "http://127.0.0.1:11434/api/chat";
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
@@ -32,7 +53,7 @@ const ollama = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      const initialResult = await initialResponse.json();
+      const initialResult: any = await initialResponse.json();
 
       console.log("Initial answer from Ollama:", initialResult);
       const answer = initialResult.message;
@@ -40,14 +61,14 @@ const ollama = {
       console.log("Response from Ollama:", answer.content);
       return answer.content;
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error during AI processing:", err.message);
       throw new Error(`Local model issues. Details: ${err.message}`);
     }
   },
 
 
-  getPromptForSingleCommit: (diff, { commitType, customMessageConvention, language }) => {
+  getPromptForSingleCommit: (diff: string, { commitType, customMessageConvention, language }: PromptOptions): string => {
     let prompt = "";
     prompt += `The commit message should be in ${language} language.\n`;
     if (commitType) prompt += `Use the commit type '${commitType}'.\n`;
@@ -58,9 +79,9 @@ const ollama = {
   },
 
   getPromptForMultipleCommits: (
-    diff,
-    { commitType, customMessageConvention, numOptions, language }
-  ) => {
+    diff: string,
+    { commitType, customMessageConvention, numOptions, language }: MultiplePromptOptions
+  ): string => {
     let prompt = "";
     prompt += `Generate exactly ${numOptions} different commit message options, separated by a semicolon (;).\n`;
     prompt += `The commit messages should be in ${language} language.\n`;
@@ -71,7 +92,7 @@ const ollama = {
     return prompt;
   },
 
-  filterApi: ({ prompt, numCompletion = 1, filterFee }) => {
+  filterApi: ({ prompt, numCompletion = 1, filterFee }: FilterApiOptions): boolean => {
     //ollama dont have any limits and is free so we dont need to filter anything
     return true;
   }

@@ -1,6 +1,6 @@
 # AI-Commit
 
-Deterministic, Conventional Commits generator powered by OpenAI or local Ollama instances. Optimized for professional, emoji-free environments.
+Deterministic, Conventional Commits generator powered by OpenAI or local Ollama instances. Optimized for professional, emoji-free environments. Now fully refactored in **TypeScript**.
 
 ## Installation (Local Fork)
 
@@ -10,6 +10,7 @@ To use this customized local fork with professional standards:
 git clone https://github.com/anggaprytn/ai-commit.git
 cd ai-commit
 npm install
+npm run build
 npm install -g .
 ```
 
@@ -26,6 +27,7 @@ ai-commit
 
 ## Features
 
+- **TypeScript Powered:** Built with strict typing for better reliability and maintainability.
 - **Professional Conventional Commits:** Enforces the standard format: `<type>(<scope>): <subject>`.
 - **Emoji-Free:** Completely removes and forbids emojis, gitmojis, and decorative icons at both the prompt and runtime layers.
 - **AI-Powered:** Support for both OpenAI (GPT-4o-mini) and local Ollama (e.g., Mistral) models.
@@ -44,6 +46,17 @@ export PROVIDER="ollama"
 # Ensure your local model is running: ollama run mistral
 ```
 
+## Technical Specifications (OpenAI)
+
+This project is optimized for cost and context efficiency:
+
+- **Max Input Tokens:** 128,000 (supports large diffs).
+- **Max Output Tokens:** 400 (strict limit for concise commit messages).
+- **Fee Calculation:**
+  - Input: $0.000005 per token.
+  - Completion: $0.000015 per token.
+- **Payload Optimization:** Automatically passes `max_tokens` to the API to prevent overspending.
+
 ## CLI Flags
 
 | Flag            | Description                                                     |
@@ -54,6 +67,18 @@ export PROVIDER="ollama"
 | `--template`    | Custom formatting string (e.g., `"Project: {COMMIT_MESSAGE}"`). |
 | `--language`    | Target output language (Default: `english`).                    |
 | `--commit-type` | Enforce specific scope/type (e.g., `feat`, `fix`).              |
+
+## Development
+
+The source code is located in the `src/` directory.
+
+```bash
+# Build the project
+npm run build
+
+# Run tests
+npm test
+```
 
 ## License
 
