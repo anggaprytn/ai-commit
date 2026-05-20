@@ -25,57 +25,42 @@ const openai = {
   },
 
   getPromptForSingleCommit: (diff, {commitType, customMessageConvention, language}) => {
-    const rules = [
-      "Do not preface the commit with anything",
-      "Use the present tense",
-      "Return the full sentence",
-      "Use the conventional commits specification (<type in lowercase>: <subject>)",
-      "NEVER use emojis, gitmoji, or unicode icons",
-      "Output only clean Conventional Commit format",
-    ];
+    const systemPrompt = `You are a deterministic git commit message generator. Analyze the provided git diff and generate a professional commit message.
 
-    const invalidExamples = [
-      "🔧 chore: update dependencies",
-      "✨ feat: add auth flow",
-      "🚀 deploy: release production build",
-    ];
+CRITICAL RULES:
+1. Follow the Conventional Commits specification strictly: <type>(<scope>): <description>
+2. NEVER use any emojis, gitmojis, formatting icons, or visual markers under any circumstances.
+3. Start the output directly with the commit type (e.g., feat, fix, refactor, chore, docs).
+4. Use lowercase for the type and scope.
+5. Use the imperative mood in the description (e.g., "add feature", not "added feature").
+6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.`;
 
-    return (
-      `Write a professional git commit message based on the diff below in ${language} language` +
-      (commitType ? ` with commit type '${commitType}'. ` : ". ") +
-      "\nRules:\n" + rules.map(r => `- ${r}`).join('\n') + "\n" +
-      "Invalid examples (DO NOT DO THIS):\n" + invalidExamples.map(e => `- ${e}`).join('\n') + "\n" +
-      `${customMessageConvention ? `Additionally apply these JSON formatted rules to your response: ${customMessageConvention}.` : ''}` +
-      '\n\n'+
-      diff
-    );
+    let prompt = `${systemPrompt}\n\n`;
+    prompt += `The commit message should be in ${language} language.\n`;
+    if (commitType) prompt += `Use the commit type '${commitType}'.\n`;
+    if (customMessageConvention) prompt += `Additional instructions: ${customMessageConvention}\n`;
+    prompt += `\nGIT DIFF:\n${diff}`;
+
+    return prompt;
   },
 
   getPromptForMultipleCommits: (diff, {commitType, customMessageConvention, numOptions, language}) => {
-    const rules = [
-      "Do not preface the commit with anything",
-      "Use the present tense",
-      "Return the full sentence",
-      "Use the conventional commits specification (<type in lowercase>: <subject>)",
-      "NEVER use emojis, gitmoji, or unicode icons",
-      "Output only clean Conventional Commit format",
-    ];
+    const systemPrompt = `You are a deterministic git commit message generator. Analyze the provided git diff and generate a professional commit message.
 
-    const invalidExamples = [
-      "🔧 chore: update dependencies",
-      "✨ feat: add auth flow",
-      "🚀 deploy: release production build",
-    ];
+CRITICAL RULES:
+1. Follow the Conventional Commits specification strictly: <type>(<scope>): <description>
+2. NEVER use any emojis, gitmojis, formatting icons, or visual markers under any circumstances.
+3. Start the output directly with the commit type (e.g., feat, fix, refactor, chore, docs).
+4. Use lowercase for the type and scope.
+5. Use the imperative mood in the description (e.g., "add feature", not "added feature").
+6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.`;
 
-    const prompt =
-      `Write a professional git commit message based on the diff below in ${language} language` +
-      (commitType ? ` with commit type '${commitType}'. ` : ". ") +
-      `and make ${numOptions} options that are separated by ";".` +
-      "\nRules:\n" + rules.map(r => `- ${r}`).join('\n') + "\n" +
-      "Invalid examples (DO NOT DO THIS):\n" + invalidExamples.map(e => `- ${e}`).join('\n') + "\n" +
-      `${customMessageConvention ? `Additionally apply these JSON formatted rules to your response: ${customMessageConvention}.` : ''}` +
-      '\n\n' +
-      diff;
+    let prompt = `${systemPrompt}\n\n`;
+    prompt += `Generate exactly ${numOptions} different commit message options, separated by a semicolon (;).\n`;
+    prompt += `The commit messages should be in ${language} language.\n`;
+    if (commitType) prompt += `Use the commit type '${commitType}'.\n`;
+    if (customMessageConvention) prompt += `Additional instructions: ${customMessageConvention}\n`;
+    prompt += `\nGIT DIFF:\n${diff}`;
 
     return prompt;
   },

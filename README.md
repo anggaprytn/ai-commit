@@ -1,4 +1,4 @@
-# AI-Commit
+# AI-Committ
 
 Deterministic, Conventional Commits generator powered by OpenAI or local Ollama instances. Optimized for professional, emoji-free environments.
 
@@ -14,6 +14,7 @@ npm install -g .
 ```
 
 ### Local Global Linking
+
 By running `npm install -g .`, you link your local development folder to your global `PATH`. This allows you to test changes immediately and use your customized version of `ai-commit` system-wide.
 
 ## Quick Start
