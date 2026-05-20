@@ -7,7 +7,7 @@ Deterministic, Conventional Commits generator powered by OpenAI or local Ollama 
 To use this customized local fork with professional standards:
 
 ```bash
-git clone <your-fork-url>
+git clone https://github.com/anggaprytn/ai-commit.git
 cd ai-commit
 npm install
 npm install -g .
