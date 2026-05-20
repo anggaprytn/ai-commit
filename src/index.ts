@@ -3,7 +3,7 @@
 'use strict'
 import { execSync } from "child_process";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository, stripEmoji, processGitDiff } from "./helpers.js";
+import { getArgs, checkGitRepository, stripEmoji, processGitDiff, getGitDiff } from "./helpers.js";
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
@@ -223,7 +223,7 @@ async function generateAICommit(): Promise<void> {
     process.exit(1);
   }
 
-  let diff = execSync("git diff --staged").toString();
+  let diff = getGitDiff();
 
   // Filter lock files
   const originalDiff = diff;

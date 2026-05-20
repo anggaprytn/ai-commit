@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processGitDiff, stripEmoji, getArgs, checkGitRepository } from '../src/helpers.js';
+import { processGitDiff, stripEmoji, getArgs, checkGitRepository, getGitDiff } from '../src/helpers.js';
 import * as gptEncoder from 'gpt-3-encoder';
 import { execSync } from 'child_process';
 
@@ -43,6 +43,50 @@ describe('helpers.ts', () => {
     it('should return false if not inside a git work tree', () => {
       vi.mocked(execSync).mockImplementation(() => { throw new Error(); });
       expect(checkGitRepository()).toBe(false);
+    });
+  });
+
+  describe('getGitDiff', () => {
+    it('should return staged diff if it exists', () => {
+      vi.mocked(execSync).mockImplementation((cmd: string) => {
+        if (cmd === 'git diff --staged') return Buffer.from('staged diff');
+        return Buffer.from('');
+      });
+
+      expect(getGitDiff()).toBe('staged diff');
+      expect(execSync).toHaveBeenCalledWith('git diff --staged');
+      expect(execSync).not.toHaveBeenCalledWith('git diff');
+    });
+
+    it('should return unstaged diff if staged is empty', () => {
+      vi.mocked(execSync).mockImplementation((cmd: string) => {
+        if (cmd === 'git diff --staged') return Buffer.from('');
+        if (cmd === 'git diff') return Buffer.from('unstaged diff');
+        return Buffer.from('');
+      });
+
+      expect(getGitDiff()).toBe('unstaged diff');
+      expect(execSync).toHaveBeenCalledWith('git diff --staged');
+      expect(execSync).toHaveBeenCalledWith('git diff');
+    });
+
+    it('should return empty string if both staged and unstaged are empty', () => {
+      vi.mocked(execSync).mockReturnValue(Buffer.from(''));
+
+      expect(getGitDiff()).toBe('');
+      expect(execSync).toHaveBeenCalledWith('git diff --staged');
+      expect(execSync).toHaveBeenCalledWith('git diff');
+    });
+
+    it('should handle errors and return empty string', () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error('git error');
+      });
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      expect(getGitDiff()).toBe('');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 

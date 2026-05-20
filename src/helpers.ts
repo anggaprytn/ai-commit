@@ -86,4 +86,21 @@ function processGitDiff(rawDiff: string): string {
   return currentDiff + "\n\n[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]";
 }
 
+export function getGitDiff(): string {
+  try {
+    // 1. Coba ambil diff dari file yang sudah di-stage (setelah git add)
+    let diff = execSync('git diff --staged').toString().trim();
+
+    // 2. Jika kosong, otomatis fallback ambil diff dari file yang belum di-stage
+    if (!diff) {
+      diff = execSync('git diff').toString().trim();
+    }
+
+    return diff;
+  } catch (error) {
+    console.error("❌ Failed to execute git diff command:", error);
+    return "";
+  }
+}
+
 export { getArgs, checkGitRepository, stripEmoji, processGitDiff }
