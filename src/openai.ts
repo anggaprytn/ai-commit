@@ -2,9 +2,9 @@ import { ChatGPTAPI } from "chatgpt";
 import { encode } from 'gpt-3-encoder';
 import inquirer from "inquirer";
 
-const MAX_OUTPUT_TOKENS: number = 400;
-const FEE_INPUT_PER_TOKEN: number = 0.000005;
-const FEE_COMPLETION_PER_TOKEN: number = 0.000015;
+export const MAX_OUTPUT_TOKENS: number = 400;
+export const FEE_INPUT_PER_TOKEN: number = 0.000005;
+export const FEE_COMPLETION_PER_TOKEN: number = 0.000015;
 
 interface SendMessageOptions {
   apiKey: string;
