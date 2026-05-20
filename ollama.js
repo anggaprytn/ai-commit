@@ -32,11 +32,27 @@ const ollama = {
 
 
   getPromptForSingleCommit: (diff, { commitType, customMessageConvention, language }) => {
+    const rules = [
+      "Do not preface the commit with anything",
+      "Use the present tense",
+      "Return the full sentence",
+      "Use the conventional commits specification (<type in lowercase>: <subject>)",
+      "NEVER use emojis, gitmoji, or unicode icons",
+      "Output only clean Conventional Commit format",
+    ];
+
+    const invalidExamples = [
+      "🔧 chore: update dependencies",
+      "✨ feat: add auth flow",
+      "🚀 deploy: release production build",
+    ];
+
     return (
-      `Write a professional git commit message based on the a diff below in ${language} language` +
+      `Write a professional git commit message based on the diff below in ${language} language` +
       (commitType ? ` with commit type '${commitType}'. ` : ". ") +
-      "Do not preface the commit with anything, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>)" +
-      `${customMessageConvention ? `. Additionally apply these JSON formatted rules to your response, even though they might be against previous mentioned rules ${customMessageConvention}: ` : ': '}` +
+      "\nRules:\n" + rules.map(r => `- ${r}`).join('\n') + "\n" +
+      "Invalid examples (DO NOT DO THIS):\n" + invalidExamples.map(e => `- ${e}`).join('\n') + "\n" +
+      `${customMessageConvention ? `Additionally apply these JSON formatted rules to your response: ${customMessageConvention}.` : ''}` +
       '\n\n' +
       diff
     );
@@ -46,11 +62,27 @@ const ollama = {
     diff,
     { commitType, customMessageConvention, numOptions, language }
   ) => {
+    const rules = [
+      "Do not preface the commit with anything",
+      "Use the present tense",
+      "Return the full sentence",
+      "Use the conventional commits specification (<type in lowercase>: <subject>)",
+      "NEVER use emojis, gitmoji, or unicode icons",
+      "Output only clean Conventional Commit format",
+    ];
+
+    const invalidExamples = [
+      "🔧 chore: update dependencies",
+      "✨ feat: add auth flow",
+      "🚀 deploy: release production build",
+    ];
+
     const prompt = `Please write a professional commit message for me to push to github based on this git diff: ${diff}. Message should be in ${language} language ` +
       (commitType ? ` with commit type '${commitType}.', ` : ", ") +
       `and make ${numOptions} options that are separated by ";".` +
-      "For each option, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>)" +
-      `${customMessageConvention ? `. Additionally apply these JSON formatted rules to your response, even though they might be against previous mentioned rules ${customMessageConvention}: ` : ': '}`
+      "\nRules:\n" + rules.map(r => `- ${r}`).join('\n') + "\n" +
+      "Invalid examples (DO NOT DO THIS):\n" + invalidExamples.map(e => `- ${e}`).join('\n') + "\n" +
+      `${customMessageConvention ? `Additionally apply these JSON formatted rules to your response: ${customMessageConvention}.` : ''}`
     return prompt;
   },
 

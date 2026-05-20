@@ -37,4 +37,11 @@ const checkGitRepository = () => {
   }
 };
 
-export { getArgs, checkGitRepository }
+function stripEmoji(input) {
+  return input
+    .replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export { getArgs, checkGitRepository, stripEmoji }

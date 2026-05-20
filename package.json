@@ -5,7 +5,7 @@
   "description": "Make Github commits easier with ChatGPT and Conventional Commits",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test-emoji.js",
     "publish:major": "npm version major && npm publish --access public",
     "ollama": "PROVIDER=ollama node index.js "
   },

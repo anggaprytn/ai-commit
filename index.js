@@ -3,7 +3,7 @@
 'use strict'
 import { execSync } from "child_process";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository } from "./helpers.js";
+import { getArgs, checkGitRepository, stripEmoji } from "./helpers.js";
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
@@ -53,7 +53,7 @@ const processTemplate = ({ template, commitMessage }) => {
 
 const makeCommit = (input) => {
   console.log("Committing Message... ");
-  execSync(`git commit -F -`, { input: input.trim() });
+  execSync(`git commit -F -`, { input: stripEmoji(input) });
   console.log("Commit Successful!");
 };
 
@@ -69,7 +69,7 @@ const generateSingleCommit = async (diff) => {
 
   const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
 
-  let finalCommitMessage = text;
+  let finalCommitMessage = stripEmoji(text);
 
   if (args.template) {
     finalCommitMessage = processTemplate({
@@ -116,7 +116,7 @@ const generateListCommits = async (diff, numOptions = 5) => {
 
   const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
 
-  let msgs = text.split(";").map((msg) => msg.trim());
+  let msgs = text.split(";").map((msg) => stripEmoji(msg));
 
   if (args.template) {
     msgs = msgs.map(msg => processTemplate({
