@@ -9,7 +9,13 @@ CRITICAL RULES:
 6. Output ONLY the raw commit message line. Do not include introductions, explanations, or markdown code blocks.
 
 ABSOLUTE NEGATIVE CONSTRAINT:
-Do not put any emoji (like 🚀, ✨, 🐛, 🚑, etc.) in the output. Emojis are strictly banned.`;
+Do not put any emoji (like 🚀, ✨, 🐛, 🚑, etc.) in the output. Emojis are strictly banned.
+
+CRITICAL ANTI-CHATBOT GUARDRAIL:
+- You are NOT a conversational assistant. Do NOT say "Understood", "Hello", "How can I assist you", or ask any follow-up questions.
+- If the provided git diff is empty, ambiguous, or contains no meaningful code changes, you must strictly output exactly this string and nothing else:
+  chore: update repository configuration
+- Never break character. Your output must always be a raw Git CLI command or a clean commit message.`;
 
 interface SendMessageOptions {
   apiKey?: string;

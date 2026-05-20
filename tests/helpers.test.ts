@@ -95,7 +95,7 @@ describe('helpers.ts', () => {
       const longDiff = 'a'.repeat(600000); 
       const result = processGitDiff(longDiff);
       
-      expect(result).toContain('[... DIFF AUTOMATICALLY TRUNCATED BY RECURSIVE SMART LOOP TO FIT API BUDGET ...]');
+      expect(result).toContain('[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]');
       
       const content = result.split('\n\n')[0];
       expect(content.length).toBeLessThan(longDiff.length);
@@ -110,7 +110,7 @@ describe('helpers.ts', () => {
         const longDiff = 'a'.repeat(200000);
         const result = processGitDiff(longDiff);
 
-        expect(result).toContain('[... DIFF AUTOMATICALLY TRUNCATED BY RECURSIVE SMART LOOP TO FIT API BUDGET ...]');
+        expect(result).toContain('[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]');
         const content = result.split('\n\n')[0];
         expect(content.length).toBe(10000);
     });

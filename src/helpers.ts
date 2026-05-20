@@ -83,7 +83,7 @@ function processGitDiff(rawDiff: string): string {
   }
 
   console.log(`✅ Truncation successful after ${iterations} cycles. Final payload optimized to ${tokens.length} tokens.`);
-  return currentDiff + "\n\n[... DIFF AUTOMATICALLY TRUNCATED BY RECURSIVE SMART LOOP TO FIT API BUDGET ...]";
+  return currentDiff + "\n\n[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]";
 }
 
 export { getArgs, checkGitRepository, stripEmoji, processGitDiff }

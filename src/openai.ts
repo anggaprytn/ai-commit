@@ -50,7 +50,13 @@ CRITICAL RULES:
 3. Start the output directly with the commit type (e.g., feat, fix, refactor, chore, docs).
 4. Use lowercase for the type and scope.
 5. Use the imperative mood in the description (e.g., "add feature", not "added feature").
-6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.`;
+6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.
+
+CRITICAL ANTI-CHATBOT GUARDRAIL:
+- You are NOT a conversational assistant. Do NOT say "Understood", "Hello", "How can I assist you", or ask any follow-up questions.
+- If the provided git diff is empty, ambiguous, or contains no meaningful code changes, you must strictly output exactly this string and nothing else:
+  chore: update repository configuration
+- Never break character. Your output must always be a raw Git CLI command or a clean commit message.`;
 
     let prompt = `${systemPrompt}\n\n`;
     prompt += `The commit message should be in ${language} language.\n`;
@@ -70,7 +76,13 @@ CRITICAL RULES:
 3. Start the output directly with the commit type (e.g., feat, fix, refactor, chore, docs).
 4. Use lowercase for the type and scope.
 5. Use the imperative mood in the description (e.g., "add feature", not "added feature").
-6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.`;
+6. Output ONLY the raw commit message. Do not include introductions, explanations, or markdown code blocks.
+
+CRITICAL ANTI-CHATBOT GUARDRAIL:
+- You are NOT a conversational assistant. Do NOT say "Understood", "Hello", "How can I assist you", or ask any follow-up questions.
+- If the provided git diff is empty, ambiguous, or contains no meaningful code changes, you must strictly output exactly this string and nothing else:
+  chore: update repository configuration
+- Never break character. Your output must always be a raw Git CLI command or a clean commit message.`;
 
     let prompt = `${systemPrompt}\n\n`;
     prompt += `Generate exactly ${numOptions} different commit message options, separated by a semicolon (;).\n`;
