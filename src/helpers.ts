@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import { encode } from 'gpt-3-encoder';
 
 export interface Args {
   [key: string]: any;
@@ -52,17 +53,37 @@ export const MAX_INPUT_TOKENS: number = 128000;
 export const MAX_ALLOWED_CHARS: number = MAX_INPUT_TOKENS * 3.5;
 
 function processGitDiff(rawDiff: string): string {
-  if (rawDiff.length <= MAX_ALLOWED_CHARS) {
-    return rawDiff;
+  const SAFE_LIMIT = 120000; // Beri buffer aman dari max 128k token
+  let currentDiff = rawDiff;
+  let tokens = encode(currentDiff);
+  let iterations = 0;
+
+  if (tokens.length <= SAFE_LIMIT) {
+    return currentDiff;
   }
 
-  console.log(`⚠️ Warning: Git diff is too large (${Math.round(rawDiff.length / 4)} tokens). Truncating to fit ${MAX_INPUT_TOKENS} tokens budget...`);
+  console.log(`⚠️ Warning: Git diff token overhead detected (${tokens.length} tokens). Running Recursive Smart Truncation...`);
 
-  // Potong string dari depan (ambil bagian atas yang paling krusial)
-  let truncatedDiff = rawDiff.slice(0, MAX_ALLOWED_CHARS);
+  // Jalankan loop pemotongan dinamis sampai masuk budget token
+  while (tokens.length > SAFE_LIMIT && currentDiff.length > 0) {
+    iterations++;
 
-  // Tambahkan penanda di akhir agar AI tahu teksnya terpotong
-  return truncatedDiff + "\n\n[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]";
+    // Hitung persentase kelebihan token dan potong string secara proporsional + beri buffer keamanan
+    const reductionRatio = SAFE_LIMIT / tokens.length;
+    const targetCharLength = Math.floor(currentDiff.length * reductionRatio * 0.95);
+
+    currentDiff = currentDiff.slice(0, targetCharLength);
+    tokens = encode(currentDiff);
+
+    if (iterations > 5) {
+      // Break-safe agar tidak terjadi infinite loop jika ada anomali string
+      currentDiff = currentDiff.slice(0, 10000);
+      break;
+    }
+  }
+
+  console.log(`✅ Truncation successful after ${iterations} cycles. Final payload optimized to ${tokens.length} tokens.`);
+  return currentDiff + "\n\n[... DIFF AUTOMATICALLY TRUNCATED BY RECURSIVE SMART LOOP TO FIT API BUDGET ...]";
 }
 
 export { getArgs, checkGitRepository, stripEmoji, processGitDiff }

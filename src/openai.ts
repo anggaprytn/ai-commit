@@ -1,7 +1,6 @@
 import { ChatGPTAPI } from "chatgpt";
 import { encode } from 'gpt-3-encoder';
 import inquirer from "inquirer";
-import { MAX_INPUT_TOKENS } from "./helpers.js";
 
 const MAX_OUTPUT_TOKENS: number = 400;
 const FEE_INPUT_PER_TOKEN: number = 0.000005;
