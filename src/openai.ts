@@ -45,17 +45,8 @@ CRITICAL ARCHITECTURAL DIRECTIVE:
 const openai = {
   sendMessage: async (input: string, { apiKey, model }: SendMessageOptions): Promise<string> => {
     const cleanDiff = input.split("<git_diff_data>\n")[1]?.split("\n</git_diff_data>")[0] || "KOSONG";
-    
-    console.log("==========================================");
-    console.log("🚨 [DEBUG AI-COMMIT] VERIFIKASI PAYLOAD SEBELUM TERBANG:");
-    console.log("Model yang dipakai:", model || "gpt-4o-mini");
-    console.log("Tipe data diff:", typeof cleanDiff);
-    console.log("Panjang karakter diff:", cleanDiff ? cleanDiff.length : 0);
-    console.log("Potongan awal diff yang dikirim:\n", cleanDiff ? cleanDiff.slice(0, 300) : "KOSONG/UNDEFINED");
-    console.log("==========================================");
 
-    const api = new ChatGPTAPI({
-      apiKey,
+    const api = new ChatGPTAPI({      apiKey,
       systemMessage: SYSTEM_PROMPT,
       completionParams: {
         model: model || "gpt-4o-mini",
