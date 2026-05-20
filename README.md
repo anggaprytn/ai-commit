@@ -1,4 +1,4 @@
-# AI-Commit
+# AI-Committ
 
 Deterministic, Conventional Commits generator powered by OpenAI or local Ollama instances. Optimized for professional, emoji-free environments.
 
