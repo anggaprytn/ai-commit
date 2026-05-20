@@ -1,60 +1,48 @@
-# **AI-Commit: The Commit Message Generator**
+# AI-Commit
 
-Professional commit message generator for personalized use.
+Deterministic, Conventional Commits generator powered by OpenAI or local Ollama instances.
 
-AI-Commit leverages OpenAI's models or local models via Ollama to analyze your code changes and generate professional commit messages following the Conventional Commits specification.
+## Installation
 
-## Local Installation (For Your Fork)
+```bash
+git clone <your-fork-url> && cd ai-commit
+npm install
+npm install -g .
 
-If you have forked this repository and want to use your customized version globally on your machine:
+```
 
-1. **Clone your fork:**
-   ```bash
-   git clone <your-fork-url>
-   cd ai-commit
-   ```
+## Quick Start
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+```bash
+git add .
+ai-commit
 
-3. **Install globally from local source:**
-   ```bash
-   npm install -g .
-   ```
-   *Note: This command links your local directory to the global `ai-commit` command. Any changes you make in this folder will be reflected when you run `ai-commit` anywhere on your system.*
-
-## Usage
-
-Once installed globally, you can use it in any git repository:
-
-1. Stage your changes: `git add .`
-2. Run the generator: `ai-commit`
-3. Follow the prompts to review and accept the generated message.
+```
 
 ## Configuration
 
-### Using OpenAI
+Set environment variables or pass flags directly:
 
-1. Generate an OpenAI API key [here](https://platform.openai.com/account/api-keys)
-2. Set your `OPENAI_API_KEY` environment variable.
-3. (Optional) Pass the key via `--apiKey`.
+```bash
+# OpenAI Setup
+export OPENAI_API_KEY="your-api-key"
 
-### Using Local Model (Ollama)
+# Ollama Setup (Local)
+export PROVIDER="ollama"
+# Ensure your local model is running: ollama run mistral
 
-1. Install Ollama from https://ollama.ai/
-2. Run `ollama run mistral` to fetch the model.
-3. Set `PROVIDER=ollama` in your environment.
+```
 
-## CLI Options
+## CLI Flags
 
-`--list`: Select from 5 generated options.
-`--force`: Skip confirmation and commit immediately.
-`--filter-fee`: Show estimated API cost before proceeding.
-`--template`: Use a custom template, e.g., `--template "Project: {COMMIT_MESSAGE}"`.
-`--language`: Set output language (default: `english`).
-`--commit-type`: Force a specific commit type (e.g., `feat`, `fix`).
+| Flag            | Description                                                     |
+| --------------- | --------------------------------------------------------------- |
+| `--list`        | Return 5 generated options to select from.                      |
+| `--force`       | Skip confirmation; commit immediately.                          |
+| `--filter-fee`  | Display estimated API cost before execution.                    |
+| `--template`    | Custom formatting string (e.g., `"Project: {COMMIT_MESSAGE}"`). |
+| `--language`    | Target output language (Default: `english`).                    |
+| `--commit-type` | Enforce specific scope/type (e.g., `feat`, `fix`).              |
 
 ## License
 
