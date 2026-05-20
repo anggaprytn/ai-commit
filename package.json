@@ -2,7 +2,7 @@
   "name": "ai-commit",
   "version": "2.2.0",
   "type": "module",
-  "description": "✨ Make Github commits easier with ChatGPT, Gitmoji and Conventional Commits 🚀",
+  "description": "Make Github commits easier with ChatGPT and Conventional Commits",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -20,7 +20,6 @@
     "ai",
     "chatgpt",
     "commit",
-    "gitmoji",
     "conventional",
     "commits"
   ],

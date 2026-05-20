@@ -1,56 +1,70 @@
-<p align="center"><img width="400px" alt="Via Protocol is the most advanced cross-chain aggregation protocol" src="https://user-images.githubusercontent.com/20267733/218333677-ebdb09e5-9487-434c-92f5-f4bdcc76f632.png" width="100%">
-</p>
-
 # **AI-Commit: The Commit Message Generator**
 
-💻 Tired of writing boring commit messages? Let AI-Commit help!
+Make your commit history organized and informative using AI.
 
-This package uses the power of OpenAI's GPT-4o-mini model to understand your code changes and generate meaningful commit messages for you. Whether you're working on a solo project or collaborating with a team, AI-Commit makes it easy to keep your commit history organized and informative.
+AI-Commit leverages OpenAI's models or local models via Ollama to analyze your code changes and generate professional commit messages following the Conventional Commits specification.
 
-## Demo
-![ai_commit_demo(1)(2)](https://github.com/JinoArch/ai-commit/assets/39610834/3002dfa2-737a-44b9-91c9-b43907f11144)
+## Installation
 
+To use AI-Commit from a local fork:
+
+1. Fork the repository on GitHub.
+2. Clone your fork to your local machine:
+   ```bash
+   git clone <your-fork-url>
+   cd ai-commit
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Install the package globally from the local directory:
+   ```bash
+   npm install -g .
+   ```
+   This links your local fork as the globally available `ai-commit` CLI.
 
 ## How it Works
-1. Install AI-Commit using `npm install -g ai-commit`
-2. Generate an OpenAI API key [here](https://platform.openai.com/account/api-keys )
-3. Set your `OPENAI_API_KEY` environment variable to your API key
-1. Make your code changes and stage them with `git add .`
-2. Type `ai-commit` in your terminal
-3. AI-Commit will analyze your changes and generate a commit message
-4. Approve the commit message and AI-Commit will create the commit for you ✅
 
-## Using local model (ollama)
+### Using OpenAI
 
-You can also use the local model for free with Ollama.
+1. Generate an OpenAI API key [here](https://platform.openai.com/account/api-keys)
+2. Set your `OPENAI_API_KEY` environment variable to your API key
+3. Make your code changes and stage them with `git add .`
+4. Type `ai-commit` in your terminal
+5. AI-Commit will analyze your changes and generate a commit message
+6. Approve the commit message and AI-Commit will create the commit for you
 
-1. Install AI-Commit using `npm install -g ai-commit`
-2. Install Ollama from https://ollama.ai/
-3. Run `ollama run mistral` to fetch model for the first time
-4. Set `PROVIDER` in your environment to `ollama`
-1. Make your code changes and stage them with `git add .`
-2. Type `ai-commit` in your terminal
-3. AI-Commit will analyze your changes and generate a commit message
-4. Approve the commit message and AI-Commit will create the commit for you ✅
+### Using Local Model (Ollama)
+
+You can also use a local model for free with Ollama.
+
+1. Install Ollama from https://ollama.ai/
+2. Run `ollama run mistral` to fetch the model for the first time
+3. Set `PROVIDER` in your environment to `ollama`
+4. Make your code changes and stage them with `git add .`
+5. Type `ai-commit` in your terminal
+6. AI-Commit will analyze your changes and generate a commit message
+7. Approve the commit message and AI-Commit will create the commit for you
 
 ## Options
+
 `--list`: Select from a list of 5 generated messages (or regenerate the list)
 
-`--force`: Automatically create a commit without being prompted to select a message (can't be used with `--list`)
+`--force`: Automatically create a commit without being prompted to select a message (cannot be used with `--list`)
 
 `--filter-fee`: Displays the approximate fee for using the API and prompts you to confirm the request
 
-`--apiKey`: Your OpenAI API key. It is not recommended to pass `apiKey` here, it is better to use `env` variable
-
-`--emoji`: Add a gitmoji to the commit message
+`--apiKey`: Your OpenAI API key. (Prefer using the `OPENAI_API_KEY` environment variable)
 
 `--template`: Specify a custom commit message template. e.g. `--template "Modified {GIT_BRANCH} | {COMMIT_MESSAGE}"`
 
-`--language`: Specify the language to use for the commit message(default: `english`). e.g. `--language english`
+`--language`: Specify the language to use for the commit message (default: `english`). e.g. `--language english`
 
 `--commit-type`: Specify the type of commit to generate. This will be used as the type in the commit message e.g. `--commit-type feat`
 
 ## Contributing
+
 We'd love for you to contribute to AI-Commit! Here's how:
 
 1. Fork the repository
@@ -62,10 +76,9 @@ We'd love for you to contribute to AI-Commit! Here's how:
 
 ## Roadmap
 
-- [x] Support for multimple suggestions: Provide multiple suggestions for the commit message.
+- [x] Support for multiple suggestions: Provide multiple suggestions for the commit message.
 - [x] Support for custom commit types: Allow users to specify a custom commit type manually.
 - [ ] Automated scope detection: Detect the scope of changes and automatically include it in the commit message.
-- [ ] Improved emoji suggestions: Enhance the emoji suggestions generated by AI-Commit to better match the changes made to the code.
 - [ ] Commit message templating: Provide a customizable commit message template for users to follow.
 - [ ] Interactive commit message generation: Allow users to interact with AI-Commit during the commit message generation process to provide more context and refine the generated message.
 - [ ] Integration with Git hooks: Integrate AI-Commit with Git hooks so that it can automatically generate commit messages whenever changes are staged.
@@ -73,6 +86,5 @@ We'd love for you to contribute to AI-Commit! Here's how:
 - [ ] Reverse commit message generation: Allow users to generate code changes from a commit message.
 
 ## License
-AI-Commit is licensed under the MIT License.
 
-## Happy coding 🚀
+AI-Commit is licensed under the MIT License.

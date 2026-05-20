@@ -4,12 +4,11 @@
 import { execSync } from "child_process";
 import inquirer from "inquirer";
 import { getArgs, checkGitRepository } from "./helpers.js";
-import { addGitmojiToCommitMessage } from './gitmoji.js';
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
 
-const REGENERATE_MSG = "♻️ Regenerate Commit Messages";
+const REGENERATE_MSG = "Regenerate Commit Messages";
 
 console.log('Ai provider: ', AI_PROVIDER);
 
@@ -25,7 +24,6 @@ if (AI_PROVIDER === 'openai' && !apiKey) {
 }
 
 let template = args.template || process.env.AI_COMMIT_COMMIT_TEMPLATE
-const doAddEmoji = args.emoji || process.env.AI_COMMIT_ADD_EMOJI
 
 const commitType = args['commit-type'];
 
@@ -54,19 +52,11 @@ const processTemplate = ({ template, commitMessage }) => {
 }
 
 const makeCommit = (input) => {
-  console.log("Committing Message... 🚀 ");
+  console.log("Committing Message... ");
   execSync(`git commit -F -`, { input: input.trim() });
-  console.log("Commit Successful! 🎉");
+  console.log("Commit Successful!");
 };
 
-
-const processEmoji = (msg, doAddEmoji) => {
-  if (doAddEmoji) {
-    return addGitmojiToCommitMessage(msg);
-  }
-
-  return msg;
-}
 
 const getPromptForSingleCommit = (diff) => {
   return provider.getPromptForSingleCommit(diff, { commitType, customMessageConvention, language })
@@ -79,7 +69,7 @@ const generateSingleCommit = async (diff) => {
 
   const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
 
-  let finalCommitMessage = processEmoji(text, args.emoji);
+  let finalCommitMessage = text;
 
   if (args.template) {
     finalCommitMessage = processTemplate({
@@ -113,7 +103,7 @@ const generateSingleCommit = async (diff) => {
   ]);
 
   if (!answer.continue) {
-    console.log("Commit aborted by user 🙅‍♂️");
+    console.log("Commit aborted by user");
     process.exit(1);
   }
 
@@ -126,7 +116,7 @@ const generateListCommits = async (diff, numOptions = 5) => {
 
   const text = await provider.sendMessage(prompt, { apiKey, model: MODEL });
 
-  let msgs = text.split(";").map((msg) => msg.trim()).map(msg => processEmoji(msg, args.emoji));
+  let msgs = text.split(";").map((msg) => msg.trim());
 
   if (args.template) {
     msgs = msgs.map(msg => processTemplate({
@@ -176,7 +166,7 @@ async function generateAICommit() {
   const isGitRepository = checkGitRepository();
 
   if (!isGitRepository) {
-    console.error("This is not a git repository 🙅‍♂️");
+    console.error("This is not a git repository");
     process.exit(1);
   }
 
@@ -193,7 +183,7 @@ async function generateAICommit() {
 
   // Handle empty diff after filtering
   if (!diff.trim()) {
-    console.log("No changes to commit except lock files 🙅");
+    console.log("No changes to commit except lock files");
     console.log("Maybe you forgot to add files? Try running git add . and then run this script again.");
     process.exit(1);
   }

@@ -30,7 +30,7 @@ const openai = {
       `Write a professional git commit message based on the a diff below in ${language} language` +
       (commitType ? ` with commit type '${commitType}'. ` : ". ") +
       `${customMessageConvention ? `Apply the following rules of an JSON formatted object, use key as what has to be changed and value as how it should be changes to your response: ${customMessageConvention}.` : ''}` +
-      "Do not preface the commit with anything, use the present tense, return the full sentence and also commit type" +
+      "Do not preface the commit with anything, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>)" +
       `${customMessageConvention ? `. Additionally apply these JSON formatted rules to your response, even though they might be against previous mentioned rules ${customMessageConvention}: ` : ': '}` +
       '\n\n'+
       diff
@@ -42,7 +42,7 @@ const openai = {
       `Write a professional git commit message based on the a diff below in ${language} language` +
       (commitType ? ` with commit type '${commitType}'. ` : ". ")+
       `and make ${numOptions} options that are separated by ";".` +
-      "For each option, use the present tense, return the full sentence and also commit type" +
+      "For each option, use the present tense, return the full sentence, and use the conventional commits specification (<type in lowercase>: <subject>)" +
       `${customMessageConvention ? `. Additionally apply these JSON formatted rules to your response, even though they might be against previous mentioned rules ${customMessageConvention}: ` : ': '}` +
       diff;
 
@@ -64,7 +64,7 @@ const openai = {
             {
                 type: "confirm",
                 name: "continue",
-                message: "Do you want to continue 💸?",
+                message: "Do you want to continue?",
                 default: true,
             },
         ]);
