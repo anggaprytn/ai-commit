@@ -48,4 +48,21 @@ function stripEmoji(input: string): string {
     .trim();
 }
 
-export { getArgs, checkGitRepository, stripEmoji }
+export const MAX_INPUT_TOKENS: number = 128000;
+export const MAX_ALLOWED_CHARS: number = MAX_INPUT_TOKENS * 3.5;
+
+function processGitDiff(rawDiff: string): string {
+  if (rawDiff.length <= MAX_ALLOWED_CHARS) {
+    return rawDiff;
+  }
+
+  console.log(`⚠️ Warning: Git diff is too large (${Math.round(rawDiff.length / 4)} tokens). Truncating to fit ${MAX_INPUT_TOKENS} tokens budget...`);
+
+  // Potong string dari depan (ambil bagian atas yang paling krusial)
+  let truncatedDiff = rawDiff.slice(0, MAX_ALLOWED_CHARS);
+
+  // Tambahkan penanda di akhir agar AI tahu teksnya terpotong
+  return truncatedDiff + "\n\n[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]";
+}
+
+export { getArgs, checkGitRepository, stripEmoji, processGitDiff }

@@ -1,8 +1,8 @@
 import { ChatGPTAPI } from "chatgpt";
 import { encode } from 'gpt-3-encoder';
 import inquirer from "inquirer";
+import { MAX_INPUT_TOKENS } from "./helpers.js";
 
-const MAX_INPUT_TOKENS: number = 128000;
 const MAX_OUTPUT_TOKENS: number = 400;
 const FEE_INPUT_PER_TOKEN: number = 0.000005;
 const FEE_COMPLETION_PER_TOKEN: number = 0.000015;
@@ -86,11 +86,6 @@ CRITICAL RULES:
   filterApi: async ({ prompt, numCompletion = 1, filterFee }: FilterApiOptions): Promise<boolean> => {
     const numTokens = encode(prompt).length;
     const fee = (numTokens * FEE_INPUT_PER_TOKEN) + (MAX_OUTPUT_TOKENS * FEE_COMPLETION_PER_TOKEN * numCompletion);
-
-    if (numTokens > MAX_INPUT_TOKENS) {
-        console.log(`The commit diff is too large for the ChatGPT API. Max ${MAX_INPUT_TOKENS} tokens.`);
-        return false;
-    }
 
     if (filterFee) {
         console.log(`This will cost you ~$${+fee.toFixed(3)} for using the API.`);

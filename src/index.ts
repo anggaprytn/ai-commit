@@ -3,7 +3,7 @@
 'use strict'
 import { execSync } from "child_process";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository, stripEmoji } from "./helpers.js";
+import { getArgs, checkGitRepository, stripEmoji, processGitDiff } from "./helpers.js";
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
@@ -57,7 +57,8 @@ const getPromptForSingleCommit = (diff: string): string => {
 };
 
 const generateSingleCommit = async (diff: string): Promise<void> => {
-  const prompt = getPromptForSingleCommit(diff)
+  const processedDiff = processGitDiff(diff);
+  const prompt = getPromptForSingleCommit(processedDiff)
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'] })) process.exit(1);
 
   const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
@@ -104,7 +105,8 @@ const generateSingleCommit = async (diff: string): Promise<void> => {
 };
 
 const generateListCommits = async (diff: string, numOptions: number = 5): Promise<void> => {
-  const prompt = provider.getPromptForMultipleCommits(diff, { commitType, customMessageConvention, numOptions, language })
+  const processedDiff = processGitDiff(diff);
+  const prompt = provider.getPromptForMultipleCommits(processedDiff, { commitType, customMessageConvention, numOptions, language })
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'], numCompletion: numOptions })) process.exit(1);
 
   const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
