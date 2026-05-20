@@ -12,23 +12,8 @@
   "bin": {
     "ai-commit": "./index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/insulineru/ai-commit.git"
-  },
-  "keywords": [
-    "ai",
-    "chatgpt",
-    "commit",
-    "conventional",
-    "commits"
-  ],
   "author": "Insuline.ru <insuline.ru@gmail.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/insulineru/ai-commit/issues"
-  },
-  "homepage": "https://github.com/insulineru/ai-commit#readme",
   "dependencies": {
     "chatgpt": "^5.0.0",
     "dotenv": "^16.0.3",
