@@ -46,7 +46,7 @@ describe('openai.ts', () => {
       const options = { language: 'en', commitType: 'feat' };
       const prompt = openai.getPromptForSingleCommit(diff, options);
       
-      expect(prompt).toContain('GIT DIFF:\ndiff content');
+      expect(prompt).toContain('<git_diff_data>\ndiff content\n</git_diff_data>');
       expect(prompt).toContain('commit type \'feat\'');
       expect(prompt).toContain('en language');
     });
@@ -60,6 +60,7 @@ describe('openai.ts', () => {
       
       expect(prompt).toContain('Generate exactly 3');
       expect(prompt).toContain('id language');
+      expect(prompt).toContain('<git_diff_data>\ndiff content\n</git_diff_data>');
     });
   });
 

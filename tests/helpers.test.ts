@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processGitDiff, stripEmoji, getArgs, checkGitRepository, getGitDiff } from '../src/helpers.js';
+import { processGitDiff, stripEmoji, getArgs, checkGitRepository, getGitDiff, adaptiveSmartDiffParser } from '../src/helpers.js';
 import * as gptEncoder from 'gpt-3-encoder';
 import { execSync } from 'child_process';
 
@@ -9,15 +9,16 @@ vi.mock('gpt-3-encoder', async () => {
   const actual = await vi.importActual('gpt-3-encoder') as any;
   return {
     ...actual,
-    encode: vi.fn().mockImplementation((text: string) => {
-        return new Array(Math.ceil(text.length / 4)).fill(0);
-    })
+    encode: vi.fn()
   };
 });
 
 describe('helpers.ts', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
+    vi.mocked(gptEncoder.encode).mockImplementation((text: string) => {
+        return new Array(Math.ceil(text.length / 4)).fill(0);
+    });
   });
 
   describe('getArgs', () => {
@@ -157,6 +158,43 @@ describe('helpers.ts', () => {
         expect(result).toContain('[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]');
         const content = result.split('\n\n')[0];
         expect(content.length).toBe(10000);
+    });
+  });
+
+  describe('adaptiveSmartDiffParser', () => {
+    it('should handle code blocks and filter empty lines', () => {
+      const diff = 'diff --git a/main.go b/main.go\n--- a/main.go\n+++ b/main.go\n@@ -1,1 +1,3 @@\n+func main() {\n+\n+  fmt.Println("hello")\n+}';
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('func main()');
+      expect(result).not.toContain('+\n'); // Should filter empty lines
+    });
+
+    it('should truncate style blocks if they are too long', () => {
+      const lines = Array.from({ length: 15 }, (_, i) => `+  color: ${i};`).join('\n');
+      const diff = `diff --git a/style.css b/style.css\n--- a/style.css\n+++ b/style.css\n@@ -1,1 +1,15 @@\n${lines}`;
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('[... Cosmetic Style Subsystem Truncated: 5 lines omitted ...]');
+    });
+
+    it('should omit asset blocks', () => {
+      const diff = 'diff --git a/image.png b/image.png\n--- a/image.png\n+++ b/image.png\n@@ -1,1 +1,1 @@\n+<binary data>';
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('[... Asset/Binary Data Omitted: 1 lines removed ...]');
+    });
+
+    it('should filter structural data lines in data blocks', () => {
+      const diff = 'diff --git a/config.json b/config.json\n--- a/config.json\n+++ b/config.json\n@@ -1,2 +1,3 @@\n {\n+  "key": "value",\n+ }';
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('"key": "value"');
+      expect(result).not.toContain('+ }');
+    });
+
+    it('should respect token budget', () => {
+      const longDiff = 'diff --git a/large.txt b/large.txt\n' + '+'.repeat(600000);
+      const result = adaptiveSmartDiffParser(longDiff);
+      
+      const tokens = gptEncoder.encode(result);
+      expect(tokens.length).toBeLessThanOrEqual(110000);
     });
   });
 });

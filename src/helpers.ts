@@ -103,4 +103,124 @@ export function getGitDiff(): string {
   }
 }
 
-export { getArgs, checkGitRepository, stripEmoji, processGitDiff }
+interface FileDiffBlock {
+  header: string;
+  type: 'code' | 'style' | 'data' | 'asset';
+  lines: string[];
+}
+
+function adaptiveSmartDiffParser(rawDiff: string): string {
+  const lines = rawDiff.split('\n');
+  const fileBlocks: FileDiffBlock[] = [];
+  let currentBlock: FileDiffBlock | null = null;
+
+  for (const line of lines) {
+    if (line.startsWith('diff --git')) {
+      if (currentBlock) fileBlocks.push(currentBlock);
+      
+      const lowerLine = line.toLowerCase();
+      let type: FileDiffBlock['type'] = 'code'; // DEFAULT: Semua dianggap source code logika
+
+      // Deteksi Tipe Non-Code menggunakan pattern matching universal
+      if (/\.(css|scss|less|sass|styl|tailwindcss)$/i.test(lowerLine)) {
+        type = 'style';
+      } else if (/\.(json|yaml|yml|xml|toml|ini|csv|lock)$/i.test(lowerLine)) {
+        type = 'data';
+      } else if (/\.(svg|png|jpg|jpeg|gif|webp|ico|pdf|zip|tar|gz|mp3|mp4|woff|woff2|eot|ttf)$/i.test(lowerLine)) {
+        type = 'asset';
+      }
+
+      currentBlock = { header: line, type, lines: [] };
+      continue;
+    }
+
+    if (currentBlock) {
+      currentBlock.lines.push(line);
+    }
+  }
+  if (currentBlock) fileBlocks.push(currentBlock);
+
+  const optimizedBlocks: string[] = [];
+
+  for (const block of fileBlocks) {
+    let processedLines: string[] = [];
+    let skippedLinesCount = 0;
+
+    processedLines.push(block.header);
+    const metaLines = block.lines.filter(l => l.startsWith('---') || l.startsWith('+++') || l.startsWith('@@'));
+    processedLines.push(...metaLines);
+
+    const contentLines = block.lines.filter(l => !l.startsWith('---') && !l.startsWith('+++') && !l.startsWith('@@'));
+
+    switch (block.type) {
+      case 'asset':
+        skippedLinesCount = contentLines.length;
+        processedLines.push(`[... Asset/Binary Data Omitted: ${skippedLinesCount} lines removed ...]`);
+        break;
+
+      case 'style':
+        if (contentLines.length > 10) {
+          processedLines.push(...contentLines.slice(0, 10));
+          skippedLinesCount = contentLines.length - 10;
+          processedLines.push(`[... Cosmetic Style Subsystem Truncated: ${skippedLinesCount} lines omitted ...]`);
+        } else {
+          processedLines.push(...contentLines);
+        }
+        break;
+
+      case 'data':
+        // Menyingkirkan baris modifikasi hampa yang sering ada di file konfigurasi/lockfile raksasa
+        for (const line of contentLines) {
+          const t = line.trim().replace(/\s/g, '');
+          if (t === '+' || t === '-' || t === '+"}' || t === '+"],' || t === '+}' || t === '+],') {
+            skippedLinesCount++;
+            continue;
+          }
+          processedLines.push(line);
+        }
+        break;
+
+      case 'code':
+      default:
+        // UNIVERSAL CODE PARSER: Menangani Rust, Go, TS, C++, Python, Ruby, Zig, Elixir, dll.
+        for (const line of contentLines) {
+          const trimmed = line.trim();
+          
+          // 1. Buang modifikasi baris hampa (hanya spasi/pindah baris)
+          if ((trimmed.startsWith('+') || trimmed.startsWith('-')) && trimmed.slice(1).trim().length === 0) {
+            skippedLinesCount++;
+            continue;
+          }
+
+          // 2. Buang baris log mentah yang terlalu bising jika terdeteksi masif
+          if (trimmed.includes('console.log') || trimmed.includes('fmt.Println') || trimmed.includes('print(')) {
+             // Tetap masukkan jika barisnya sedikit, tapi ini mengurangi noise log sampah
+          }
+
+          processedLines.push(line);
+        }
+        break;
+    }
+
+    optimizedBlocks.push(processedLines.join('\n'));
+  }
+
+  let finalPayload = optimizedBlocks.join('\n\n');
+
+  // RECURSIVE TOKEN BUDGET CHECK (Final Fortress)
+  const SAFE_LIMIT = 110000;
+  let tokens = encode(finalPayload);
+  let iterations = 0;
+
+  while (tokens.length > SAFE_LIMIT && finalPayload.length > 0) {
+    iterations++;
+    const reductionRatio = SAFE_LIMIT / tokens.length;
+    finalPayload = finalPayload.slice(0, Math.floor(finalPayload.length * reductionRatio * 0.95));
+    tokens = encode(finalPayload);
+    if (iterations > 3) break;
+  }
+
+  return finalPayload;
+}
+
+export { getArgs, checkGitRepository, stripEmoji, processGitDiff, adaptiveSmartDiffParser }

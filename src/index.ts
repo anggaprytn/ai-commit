@@ -3,7 +3,7 @@
 'use strict'
 import { execSync } from "child_process";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository, stripEmoji, processGitDiff, getGitDiff } from "./helpers.js";
+import { getArgs, checkGitRepository, stripEmoji, getGitDiff, adaptiveSmartDiffParser } from "./helpers.js";
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
@@ -57,37 +57,7 @@ const getPromptForSingleCommit = (diff: string): string => {
 };
 
 const generateSingleCommit = async (diff: string): Promise<void> => {
-  const processedDiff = processGitDiff(diff).trim();
-
-  // Jika diff kosong atau hanya berisi penanda truncated
-  if (!processedDiff || processedDiff === "[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]") {
-    console.log("ℹ️ No meaningful code changes detected in diff (possibly only lockfile updates). Using local deterministic fallback.");
-
-    const fallbackMessage = "chore: update dependencies and formatting";
-
-    console.log(
-      `Proposed Commit:\n------------------------------\n${fallbackMessage}\n------------------------------`
-    );
-
-    const answer: any = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "continue",
-        message: "Do you want to continue?",
-        default: true,
-      },
-    ]);
-
-    if (!answer.continue) {
-      console.log("Commit aborted by user");
-      process.exit(1);
-    }
-
-    makeCommit(fallbackMessage);
-    return;
-  }
-
-  const prompt = getPromptForSingleCommit(processedDiff)
+  const prompt = getPromptForSingleCommit(diff)
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'] })) process.exit(1);
 
   const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
@@ -134,37 +104,7 @@ const generateSingleCommit = async (diff: string): Promise<void> => {
 };
 
 const generateListCommits = async (diff: string, numOptions: number = 5): Promise<void> => {
-  const processedDiff = processGitDiff(diff).trim();
-
-  // Jika diff kosong atau hanya berisi penanda truncated
-  if (!processedDiff || processedDiff === "[... DIFF TRUNCATED DUE TO MAX TOKEN LIMIT ...]") {
-    console.log("ℹ️ No meaningful code changes detected in diff (possibly only lockfile updates). Using local deterministic fallback.");
-
-    const fallbackMessage = "chore: update dependencies and formatting";
-
-    console.log(
-      `Proposed Commit:\n------------------------------\n${fallbackMessage}\n------------------------------`
-    );
-
-    const answer: any = await inquirer.prompt([
-      {
-        type: "confirm",
-        name: "continue",
-        message: "Do you want to continue?",
-        default: true,
-      },
-    ]);
-
-    if (!answer.continue) {
-      console.log("Commit aborted by user");
-      process.exit(1);
-    }
-
-    makeCommit(fallbackMessage);
-    return;
-  }
-
-  const prompt = provider.getPromptForMultipleCommits(processedDiff, { commitType, customMessageConvention, numOptions, language })
+  const prompt = provider.getPromptForMultipleCommits(diff, { commitType, customMessageConvention, numOptions, language })
   if (!await provider.filterApi({ prompt, filterFee: args['filter-fee'], numCompletion: numOptions })) process.exit(1);
 
   const text = await provider.sendMessage(prompt, { apiKey: apiKey!, model: MODEL });
@@ -234,8 +174,11 @@ async function generateAICommit(): Promise<void> {
     console.log("Changes detected in lock files. These changes will be included in the commit but won't be analyzed for commit message generation.");
   }
 
+  // Apply Universal Polyglot Diff Engine
+  diff = adaptiveSmartDiffParser(diff);
+
   // Handle empty diff after filtering
-  if (!diff.trim()) {
+  if (!diff) {
     console.log("No changes to commit except lock files");
     console.log("Maybe you forgot to add files? Try running git add . and then run this script again.");
     process.exit(1);

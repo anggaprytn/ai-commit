@@ -48,7 +48,7 @@ describe('ollama.ts', () => {
       const diff = 'diff content';
       const options = { language: 'en', commitType: 'feat' };
       const prompt = ollama.getPromptForSingleCommit(diff, options);
-      expect(prompt).toContain('GIT DIFF:\ndiff content');
+      expect(prompt).toContain('<git_diff_data>\ndiff content\n</git_diff_data>');
       expect(prompt).toContain('feat');
     });
 
@@ -57,6 +57,7 @@ describe('ollama.ts', () => {
       const options = { language: 'en', numOptions: 5 };
       const prompt = ollama.getPromptForMultipleCommits(diff, options);
       expect(prompt).toContain('Generate exactly 5');
+      expect(prompt).toContain('<git_diff_data>\ndiff content\n</git_diff_data>');
     });
   });
 
