@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { processGitDiff, stripEmoji, getArgs, checkGitRepository, getGitDiff, adaptiveSmartDiffParser } from '../src/helpers.js';
+import { processGitDiff, stripEmoji, getArgs, checkGitRepository, getGitDiff, adaptiveSmartDiffParser, getFilesFromDiff } from '../src/helpers.js';
 import * as gptEncoder from 'gpt-3-encoder';
 import { execSync } from 'child_process';
 
@@ -170,16 +170,16 @@ describe('helpers.ts', () => {
     });
 
     it('should truncate style blocks if they are too long', () => {
-      const lines = Array.from({ length: 15 }, (_, i) => `+  color: ${i};`).join('\n');
+      const lines = Array.from({ length: 25 }, (_, i) => `+  color: ${i};`).join('\n');
       const diff = `diff --git a/style.css b/style.css\n--- a/style.css\n+++ b/style.css\n@@ -1,1 +1,15 @@\n${lines}`;
       const result = adaptiveSmartDiffParser(diff);
-      expect(result).toContain('[... Cosmetic Style Subsystem Truncated: 5 lines omitted ...]');
+      expect(result).toContain('[... Cosmetic Style Truncated: 10 lines omitted ...]');
     });
 
     it('should omit asset blocks', () => {
       const diff = 'diff --git a/image.png b/image.png\n--- a/image.png\n+++ b/image.png\n@@ -1,1 +1,1 @@\n+<binary data>';
       const result = adaptiveSmartDiffParser(diff);
-      expect(result).toContain('[... Asset/Binary Data Omitted: 1 lines removed ...]');
+      expect(result).toContain('[... Asset/Binary Data Omitted ...]');
     });
 
     it('should filter structural data lines in data blocks', () => {
@@ -189,12 +189,43 @@ describe('helpers.ts', () => {
       expect(result).not.toContain('+ }');
     });
 
+    it('should preserve doc blocks correctly', () => {
+      const diff = 'diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1,1 +1,1 @@\n+# New Title';
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('# New Title');
+      expect(result).toContain('--- a/README.md');
+    });
+
+    it('should filter empty lines in doc blocks', () => {
+      const diff = 'diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1,1 +1,3 @@\n+# Line 1\n+\n+# Line 2';
+      const result = adaptiveSmartDiffParser(diff);
+      expect(result).toContain('# Line 1');
+      expect(result).toContain('# Line 2');
+      expect(result).not.toContain('+\n'); 
+    });
+
     it('should respect token budget', () => {
       const longDiff = 'diff --git a/large.txt b/large.txt\n' + '+'.repeat(600000);
       const result = adaptiveSmartDiffParser(longDiff);
       
       const tokens = gptEncoder.encode(result);
       expect(tokens.length).toBeLessThanOrEqual(110000);
+    });
+  });
+
+  describe('getFilesFromDiff', () => {
+    it('should extract filenames from various formats', () => {
+      const diff = 'diff --git a/README.md b/README.md\ndiff --git a/src/index.ts b/src/index.ts\ndiff --git a/sub/dir/file.txt b/sub/dir/file.txt';
+      const files = getFilesFromDiff(diff);
+      expect(files).toEqual(['README.md', 'src/index.ts', 'sub/dir/file.txt']);
+    });
+
+    it('should handle unusual filenames', () => {
+      const diff = 'diff --git "a/file with spaces.txt" "b/file with spaces.txt"';
+      const files = getFilesFromDiff(diff);
+      // Our current regex might need to be even smarter for spaces with quotes, 
+      // but let's see what it does.
+      expect(files[0]).toContain('file with spaces.txt');
     });
   });
 });

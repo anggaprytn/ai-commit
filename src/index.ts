@@ -3,7 +3,7 @@
 'use strict'
 import { execSync } from "child_process";
 import inquirer from "inquirer";
-import { getArgs, checkGitRepository, stripEmoji, getGitDiff, adaptiveSmartDiffParser } from "./helpers.js";
+import { getArgs, checkGitRepository, stripEmoji, getGitDiff, adaptiveSmartDiffParser, getFilesFromDiff } from "./helpers.js";
 import { AI_PROVIDER, MODEL, args } from "./config.js"
 import openai from "./openai.js"
 import ollama from "./ollama.js"
@@ -174,12 +174,16 @@ async function generateAICommit(): Promise<void> {
     console.log("Changes detected in lock files. These changes will be included in the commit but won't be analyzed for commit message generation.");
   }
 
+  const files = getFilesFromDiff(diff);
+  console.log(`Analyzing changes in: ${files.join(', ')}`);
+  console.log(`Using ${AI_PROVIDER} (${MODEL})...`);
+
   // Apply Universal Polyglot Diff Engine
   diff = adaptiveSmartDiffParser(diff);
 
   // Handle empty diff after filtering
-  if (!diff) {
-    console.log("No changes to commit except lock files");
+  if (!diff || diff.trim().length === 0) {
+    console.log("No significant changes to commit after filtering.");
     console.log("Maybe you forgot to add files? Try running git add . and then run this script again.");
     process.exit(1);
   }

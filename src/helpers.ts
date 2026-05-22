@@ -105,7 +105,7 @@ export function getGitDiff(): string {
 
 interface FileDiffBlock {
   header: string;
-  type: 'code' | 'style' | 'data' | 'asset';
+  type: 'code' | 'style' | 'data' | 'asset' | 'docs';
   lines: string[];
 }
 
@@ -119,15 +119,16 @@ function adaptiveSmartDiffParser(rawDiff: string): string {
       if (currentBlock) fileBlocks.push(currentBlock);
       
       const lowerLine = line.toLowerCase();
-      let type: FileDiffBlock['type'] = 'code'; // DEFAULT: Semua dianggap source code logika
+      let type: FileDiffBlock['type'] = 'code'; // DEFAULT
 
-      // Deteksi Tipe Non-Code menggunakan pattern matching universal
       if (/\.(css|scss|less|sass|styl|tailwindcss)$/i.test(lowerLine)) {
         type = 'style';
       } else if (/\.(json|yaml|yml|xml|toml|ini|csv|lock)$/i.test(lowerLine)) {
         type = 'data';
       } else if (/\.(svg|png|jpg|jpeg|gif|webp|ico|pdf|zip|tar|gz|mp3|mp4|woff|woff2|eot|ttf)$/i.test(lowerLine)) {
         type = 'asset';
+      } else if (/\.(md|txt|markdown|doc|docx|rst|org|tex)$/i.test(lowerLine)) {
+        type = 'docs';
       }
 
       currentBlock = { header: line, type, lines: [] };
@@ -147,54 +148,59 @@ function adaptiveSmartDiffParser(rawDiff: string): string {
     let skippedLinesCount = 0;
 
     processedLines.push(block.header);
-    const metaLines = block.lines.filter(l => l.startsWith('---') || l.startsWith('+++') || l.startsWith('@@'));
-    processedLines.push(...metaLines);
-
-    const contentLines = block.lines.filter(l => !l.startsWith('---') && !l.startsWith('+++') && !l.startsWith('@@'));
 
     switch (block.type) {
       case 'asset':
-        skippedLinesCount = contentLines.length;
-        processedLines.push(`[... Asset/Binary Data Omitted: ${skippedLinesCount} lines removed ...]`);
+        processedLines.push(`[... Asset/Binary Data Omitted ...]`);
         break;
 
       case 'style':
-        if (contentLines.length > 10) {
-          processedLines.push(...contentLines.slice(0, 10));
-          skippedLinesCount = contentLines.length - 10;
-          processedLines.push(`[... Cosmetic Style Subsystem Truncated: ${skippedLinesCount} lines omitted ...]`);
-        } else {
-          processedLines.push(...contentLines);
+        let styleCount = 0;
+        for (const line of block.lines) {
+          if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
+            processedLines.push(line);
+            continue;
+          }
+          if (styleCount < 15) {
+            processedLines.push(line);
+            styleCount++;
+          } else {
+            skippedLinesCount++;
+          }
+        }
+        if (skippedLinesCount > 0) {
+          processedLines.push(`[... Cosmetic Style Truncated: ${skippedLinesCount} lines omitted ...]`);
         }
         break;
 
       case 'data':
-        // Menyingkirkan baris modifikasi hampa yang sering ada di file konfigurasi/lockfile raksasa
-        for (const line of contentLines) {
+        for (const line of block.lines) {
+          if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
+            processedLines.push(line);
+            continue;
+          }
           const t = line.trim().replace(/\s/g, '');
           if (t === '+' || t === '-' || t === '+"}' || t === '+"],' || t === '+}' || t === '+],') {
-            skippedLinesCount++;
             continue;
           }
           processedLines.push(line);
         }
         break;
 
+      case 'docs':
       case 'code':
       default:
-        // UNIVERSAL CODE PARSER: Menangani Rust, Go, TS, C++, Python, Ruby, Zig, Elixir, dll.
-        for (const line of contentLines) {
-          const trimmed = line.trim();
-          
-          // 1. Buang modifikasi baris hampa (hanya spasi/pindah baris)
-          if ((trimmed.startsWith('+') || trimmed.startsWith('-')) && trimmed.slice(1).trim().length === 0) {
-            skippedLinesCount++;
+        for (const line of block.lines) {
+          if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
+            processedLines.push(line);
             continue;
           }
 
-          // 2. Buang baris log mentah yang terlalu bising jika terdeteksi masif
-          if (trimmed.includes('console.log') || trimmed.includes('fmt.Println') || trimmed.includes('print(')) {
-             // Tetap masukkan jika barisnya sedikit, tapi ini mengurangi noise log sampah
+          const trimmed = line.trim();
+          
+          // 1. Buang modifikasi baris hampa
+          if ((trimmed.startsWith('+') || trimmed.startsWith('-')) && trimmed.slice(1).trim().length === 0) {
+            continue;
           }
 
           processedLines.push(line);
@@ -205,7 +211,8 @@ function adaptiveSmartDiffParser(rawDiff: string): string {
     optimizedBlocks.push(processedLines.join('\n'));
   }
 
-  let finalPayload = optimizedBlocks.join('\n\n');
+  let finalPayload = optimizedBlocks.join('\n');
+
 
   // RECURSIVE TOKEN BUDGET CHECK (Final Fortress)
   const SAFE_LIMIT = 110000;
@@ -221,6 +228,31 @@ function adaptiveSmartDiffParser(rawDiff: string): string {
   }
 
   return finalPayload;
+}
+
+export function getFilesFromDiff(diff: string): string[] {
+  const lines = diff.split('\n');
+  return lines
+    .filter(line => line.startsWith('diff --git'))
+    .map(line => {
+        // Handle quoted filenames (e.g., diff --git "a/file name.txt" "b/file name.txt")
+        // We look for the part after the second space which typically starts with a/ or "a/
+        const match = line.match(/diff --git (?:".+"|".+")? ?(.+) (.+)$/);
+        
+        // A more robust way: use the last part that typically starts with b/ or "b/
+        const bPartMatch = line.match(/ (?:b\/|"(?:b\/)?)([^"]+)"?$/);
+        if (bPartMatch) {
+            let file = bPartMatch[1];
+            if (file.startsWith('b/')) file = file.slice(2);
+            return file.trim();
+        }
+
+        const parts = line.split(' b/');
+        if (parts.length > 1) return parts[1].trim().replace(/^"/, '').replace(/"$/, '');
+
+        const lastPart = line.split(' ').pop() || '';
+        return lastPart.trim().replace(/^"/, '').replace(/"$/, '').replace(/^b\//, '');
+    });
 }
 
 export { getArgs, checkGitRepository, stripEmoji, processGitDiff, adaptiveSmartDiffParser }
